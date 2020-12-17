@@ -47,8 +47,8 @@ cache:
 # "gradle test": run the JUnit test suite and produce report
 script:
   # lint the assignment's documentation
-  - mdl README.md
-  - proselint README.md
+  - mdl Avmf-README.md
+  - proselint Avmf-README.md
   - gradle --version
   - gradle clean
   - gradle check
