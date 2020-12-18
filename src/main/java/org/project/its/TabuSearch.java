@@ -1,7 +1,6 @@
 package org.project.its;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -13,7 +12,7 @@ import org.avmframework.variable.AtomicVariable;
 
 public class TabuSearch {
 	
-	private static final int ITERATIONS = 50;
+	private static final int ITERATIONS = 100;
 	private static final int TABU_LIST_SIZE = 10;
 	
 	protected ObjectiveValue currentValue;
@@ -25,7 +24,7 @@ public class TabuSearch {
 	protected List<Vector> tabuList;
 	protected ObjectiveFunction objFun;
 	
-	public void search(Vector vector, ObjectiveFunction objectiveFunction) throws TerminationException {
+	public Vector search(Vector vector, ObjectiveFunction objectiveFunction) throws TerminationException {
 		this.current = vector.deepCopy();
 		this.best = vector.deepCopy();
 		this.objFun = objectiveFunction;
@@ -34,10 +33,10 @@ public class TabuSearch {
 		
 		this.tabuList = new ArrayList<>();
 
-		performSearch();
+		return performSearch();
 	}
 	 
-	protected void performSearch() throws TerminationException {
+	protected Vector performSearch() throws TerminationException {
 		int counter = 1;
 		boolean improved = false;
 
@@ -45,13 +44,12 @@ public class TabuSearch {
 		
 		while (counter <= ITERATIONS || improved) {
 
-			System.out.println("Get neighbours");
 			List<Vector> neighboursList = getNeighbours(current.size(), current);
 
 			Vector bestNeighbour = neighboursList.get(0).deepCopy();
 			ObjectiveValue bestNeighbourValue = objFun.evaluate(bestNeighbour);
 			for (Vector neighbour : neighboursList) {
-				boolean isTabu = tabuList.contains(neighbour) ? true : false;
+				boolean isTabu = tabuList.contains(neighbour);
 
 				ObjectiveValue neighbourValue = objFun.evaluate(neighbour);
 
@@ -67,7 +65,7 @@ public class TabuSearch {
 			currentValue = bestNeighbourValue;
 			tabuList.add(bestNeighbour);
 
-			if (tabuList.size() > 10) {
+			if (tabuList.size() > TABU_LIST_SIZE) {
 				tabuList.remove(0);
 			}
 			
@@ -78,7 +76,7 @@ public class TabuSearch {
 			}
 			counter += 1;
 		}
-		
+		return best;
 	}
 	
 	private List<Vector> getNeighbours(int neighbourhoodSize, Vector vector){
@@ -88,10 +86,12 @@ public class TabuSearch {
 		for(int i = 0; i < neighbourhoodSize; i++) {
 
 			AtomicVariable currentVar = (AtomicVariable) vector.getVariable(i);
+			if(currentVar.getValue() == 0) {
+				System.out.println("Current: " + currentVar.getValue() + " Max: " + currentVar.getMax() + " Min: " + currentVar.getMin());
+			}
 			int range = Math.min(currentVar.getMax() - currentVar.getValue(), currentVar.getValue() - currentVar.getMin());
-			int bigMove = new Random().nextInt(range) + 2;
+			int bigMove = new Random().nextInt(range + 1) + 1;
 
-			System.out.println("Changing index " + i + " with the following move: " + bigMove);
 			Vector neighbourVector1 = generateNeighbour(vector, i, 1);
 			Vector neighbourVector2 = generateNeighbour(vector, i, -1);
 			Vector neighbourVector3 = generateNeighbour(vector, i, bigMove);

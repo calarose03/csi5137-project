@@ -1,6 +1,5 @@
 package org.project.its;
 
-import org.avmframework.AbstractVector;
 import org.avmframework.EmptyVectorException;
 import org.avmframework.Monitor;
 import org.avmframework.TerminationException;
@@ -8,6 +7,10 @@ import org.avmframework.TerminationPolicy;
 import org.avmframework.Vector;
 import org.avmframework.initialization.Initializer;
 import org.avmframework.objective.ObjectiveFunction;
+import org.avmframework.objective.ObjectiveValue;
+import org.avmframework.variable.AtomicVariable;
+
+import java.util.Random;
 
 public class IteratedTabuSearch {
 	
@@ -61,10 +64,39 @@ public class IteratedTabuSearch {
 	    return monitor;
 	}
 	
-	protected void iteratedTabuSearch(AbstractVector abstractVector) throws TerminationException {
+	protected void iteratedTabuSearch(Vector vector) throws TerminationException {
 
-		search.search(vector, objFun);
-		
+		Vector currentSolution = search.search(vector, objFun);
+
+		Vector bestSolution = currentSolution.deepCopy();
+		ObjectiveValue bestValue = objFun.evaluate(bestSolution);
+
+		for(int i = 1; i < vector.size(); i++) {
+			vector = perturbate(currentSolution);
+
+			currentSolution = search.search(vector, objFun);
+			ObjectiveValue currentValue = objFun.evaluate(currentSolution);
+
+			if (currentValue.betterThan(bestValue)) {
+				bestValue = currentValue;
+			}
+		}
+
+		// Our search has ended, we force a termination.
+		throw new TerminationException();
+	}
+
+	private Vector perturbate(Vector vector){
+		int level = new Random().nextInt(vector.size()-1) + 1;
+
+		Vector perturbation = vector.deepCopy();
+
+		for(int i = level; i <  vector.size(); i++){
+			AtomicVariable var = (AtomicVariable) perturbation.getVariable(i);
+			int newValue = new Random().nextInt(var.getMax());
+			var.setValue(newValue);
+		}
+		return perturbation;
 	}
 
 }
