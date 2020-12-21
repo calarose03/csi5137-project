@@ -27,7 +27,7 @@ public class GenerateInputData {
 
   // CHANGE THE FOLLOWING CONSTANTS TO EXPLORE THEIR EFFECT ON THE SEARCH:
   // - search constants
-  static final String SEARCH_NAME = "HillClimbingSearch"; // can also be set at the command line
+  static final String SEARCH_NAME = "IteratedPatternSearch"; // can also be set at the command line
   static final int MAX_EVALUATIONS = 100000;
 
   public static void main(String[] args) {

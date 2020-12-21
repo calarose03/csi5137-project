@@ -13,90 +13,96 @@ import org.avmframework.variable.AtomicVariable;
 import java.util.Random;
 
 public class IteratedTabuSearch {
-	
-	protected TabuSearch search;
-	
-	protected TerminationPolicy terminationPolicy;
-	
-	protected Initializer initializer;
-	
-	protected Initializer restarter;
 
-	protected Monitor monitor;
+    protected TabuSearch search;
 
-	protected ObjectiveFunction objFun;
+    protected TerminationPolicy terminationPolicy;
 
-	protected Vector vector;
-	
-	public IteratedTabuSearch(TerminationPolicy tp, Initializer initializer) {
-		this.search = new TabuSearch();
-	    this.terminationPolicy = tp;
-	    this.initializer = initializer;
-	    this.restarter = initializer;
-	}
-	
-	public Monitor search(Vector vector, ObjectiveFunction objFun) {
-		// set up the monitor
-	    this.monitor = new Monitor(terminationPolicy);
+    protected Initializer initializer;
 
-	    // set up the objective function
-	    this.objFun = objFun;
-	    objFun.setMonitor(monitor);
+    protected Initializer restarter;
 
-	    // initialize the vector
-	    this.vector = vector;
-	    initializer.initialize(vector);
+    protected Monitor monitor;
 
-	    // is there anything to optimize?
-	    if (vector.size() == 0) {
-	      throw new EmptyVectorException();
-	    }
+    protected ObjectiveFunction objFun;
 
-	    try {
-		  System.out.println("Starting");
-		  iteratedTabuSearch(vector);
+    protected Vector vector;
 
-	    } catch (TerminationException exception) {
-	      // the search has ended
-	      monitor.observeTermination();
-	    }
+    public IteratedTabuSearch(TerminationPolicy tp, Initializer initializer) {
+        this.search = new TabuSearch();
+        this.terminationPolicy = tp;
+        this.initializer = initializer;
+        this.restarter = initializer;
+    }
 
-	    return monitor;
-	}
-	
-	protected void iteratedTabuSearch(Vector vector) throws TerminationException {
+    public Monitor search(Vector vector, ObjectiveFunction objFun, boolean isTabuOnly) {
+        // set up the monitor
+        this.monitor = new Monitor(terminationPolicy);
 
-		Vector currentSolution = search.search(vector, objFun);
+        // set up the objective function
+        this.objFun = objFun;
+        objFun.setMonitor(monitor);
 
-		Vector bestSolution = currentSolution.deepCopy();
-		ObjectiveValue bestValue = objFun.evaluate(bestSolution);
+        // initialize the vector
+        this.vector = vector;
+        initializer.initialize(vector);
 
-		for(int i = 1; i < vector.size(); i++) {
-			vector = perturbate(currentSolution);
+        // is there anything to optimize?
+        if (vector.size() == 0) {
+            throw new EmptyVectorException();
+        }
 
-			currentSolution = search.search(vector, objFun);
-			ObjectiveValue currentValue = objFun.evaluate(currentSolution);
+        try {
+            System.out.println("Starting");
+            if (isTabuOnly) {
+                System.out.println("Doing TS only");
+                search.search(vector, objFun);
+            } else {
+                System.out.println("Doing ITS");
+                iteratedTabuSearch(vector);
+            }
+            throw new TerminationException();
+        } catch (TerminationException exception) {
+            // the search has ended
+            monitor.observeTermination();
+        }
 
-			if (currentValue.betterThan(bestValue)) {
-				bestValue = currentValue;
-			}
-		}
+        return monitor;
+    }
 
-		// Our search has ended, we force a termination.
-		throw new TerminationException();
-	}
+    protected void iteratedTabuSearch(Vector vector) throws TerminationException {
 
-	private Vector perturbate(Vector vector){
-		int level = new Random().nextInt(vector.size()-1) + 1;
+        Vector currentSolution = search.search(vector, objFun);
 
-		Vector perturbation = vector.deepCopy();
+        Vector bestSolution = currentSolution.deepCopy();
+        ObjectiveValue bestValue = objFun.evaluate(bestSolution);
 
-		for(int i = level; i <  vector.size(); i++){
-			AtomicVariable var = (AtomicVariable) perturbation.getVariable(i);
-			int newValue = new Random().nextInt(var.getMax());
-			var.setValue(newValue);
-		}
-		return perturbation;
-	}
+        for (int i = 1; i < vector.size(); i++) {
+            vector = perturb(currentSolution);
+
+            currentSolution = search.search(vector, objFun);
+            ObjectiveValue currentValue = objFun.evaluate(currentSolution);
+
+            if (currentValue.betterThan(bestValue)) {
+                bestValue = currentValue;
+            }
+        }
+
+        // Our search has ended, we force a termination.
+        throw new TerminationException();
+    }
+
+    private Vector perturb(Vector vector) {
+        int level = new Random().nextInt(vector.size() - 1) + 1;
+
+        Vector perturbation = vector.deepCopy();
+
+        for (int i = level; i < vector.size(); i++) {
+            AtomicVariable var = (AtomicVariable) perturbation.getVariable(i);
+            int newValue = new Random().nextInt(var.getMax());
+            var.setValue(newValue);
+        }
+        return perturbation;
+    }
 
 }

@@ -22,7 +22,7 @@ public class FixedPointVariable extends AtomicVariable {
 
   @Override
   public FixedPointVariable deepCopy() {
-    FixedPointVariable copy = new FixedPointVariable(initialValue, precision, min, max);
+    FixedPointVariable copy = new FixedPointVariable(initialValue, precision, intToDouble(min, precision), intToDouble(max, precision));
     copy.value = value;
     return copy;
   }
