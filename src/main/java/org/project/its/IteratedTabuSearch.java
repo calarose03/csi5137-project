@@ -35,7 +35,7 @@ public class IteratedTabuSearch {
         this.restarter = initializer;
     }
 
-    public Monitor search(Vector vector, ObjectiveFunction objFun, boolean isTabuOnly) {
+    public Monitor search(Vector vector, ObjectiveFunction objFun, boolean isITS) {
         // set up the monitor
         this.monitor = new Monitor(terminationPolicy);
 
@@ -53,13 +53,10 @@ public class IteratedTabuSearch {
         }
 
         try {
-            System.out.println("Starting");
-            if (isTabuOnly) {
-                System.out.println("Doing TS only");
-                search.search(vector, objFun);
-            } else {
-                System.out.println("Doing ITS");
+            if (isITS) {
                 iteratedTabuSearch(vector);
+            } else {
+                search.search(vector, objFun);
             }
             throw new TerminationException();
         } catch (TerminationException exception) {
@@ -70,6 +67,7 @@ public class IteratedTabuSearch {
         return monitor;
     }
 
+    /** Iterated Tabu Search implementation (goes with Algorithm 1 in the report)**/
     protected void iteratedTabuSearch(Vector vector) throws TerminationException {
 
         Vector currentSolution = search.search(vector, objFun);
@@ -77,12 +75,15 @@ public class IteratedTabuSearch {
         Vector bestSolution = currentSolution.deepCopy();
         ObjectiveValue bestValue = objFun.evaluate(bestSolution);
 
-        for (int i = 1; i < vector.size(); i++) {
+        for (int i = 0; i < vector.size(); i++) {
+            // Perturb the current solution
             vector = perturb(currentSolution);
 
+            // Do the Tabu Search
             currentSolution = search.search(vector, objFun);
             ObjectiveValue currentValue = objFun.evaluate(currentSolution);
 
+            // Update best solution if needed
             if (currentValue.betterThan(bestValue)) {
                 bestValue = currentValue;
             }
@@ -92,11 +93,13 @@ public class IteratedTabuSearch {
         throw new TerminationException();
     }
 
+    /** Method to perturb the solution (goes with Algorithm 4 in the report) **/
     private Vector perturb(Vector vector) {
         int level = new Random().nextInt(vector.size() - 1) + 1;
 
         Vector perturbation = vector.deepCopy();
 
+        // For each variable in the subset, randomly assign a new value
         for (int i = level; i < vector.size(); i++) {
             AtomicVariable var = (AtomicVariable) perturbation.getVariable(i);
             int newValue = new Random().nextInt(var.getMax());

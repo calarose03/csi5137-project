@@ -27,7 +27,7 @@ public class GenerateInputDataITS {
         // instantiate the branch using command line parameters
         Branch target = argsParser.parseBranchParam(testObject);
 
-        boolean isTabuOnly = argsParser.parseTabuParam();
+        boolean isITS = argsParser.parseTabuParam();
 
         // set up the objective function
         ObjectiveFunction objFun = testObject.getObjectiveFunction(target);
@@ -47,7 +47,7 @@ public class GenerateInputDataITS {
         IteratedTabuSearch its = new IteratedTabuSearch(terminationPolicy, initializer);
 
         // perform the search
-        Monitor monitor = its.search(vector, objFun, isTabuOnly);
+        Monitor monitor = its.search(vector, objFun, isITS);
 
         // output the results
         System.out.println("Best solution: " + monitor.getBestVector());
@@ -79,8 +79,8 @@ public class GenerateInputDataITS {
                     "branch",
                     "a branch ID of the form X(T|F) where X is a branching node number (e.g., \"5T\")");
             addParam(
-                    "tabuonly",
-                    "a boolean to specify if the run is going through ITS or TS");
+                    "its",
+                    "a boolean to specify if the run is going through ITS or TS (true for ITS, false for TS");
             super.addParams();
         }
 
@@ -120,20 +120,19 @@ public class GenerateInputDataITS {
         }
 
         boolean parseTabuParam() {
-            boolean isTabuOnly = false;
+            boolean isITS = false;
             if (args.length > TS_PARAM) {
                 String suppliedParam = args[TS_PARAM];
 
                 try {
-
-                    isTabuOnly = suppliedParam.equalsIgnoreCase("true");
+                    isITS = suppliedParam.equalsIgnoreCase("true");
                 } catch (Exception exception) {
                     error(exception.getMessage());
                 }
             } else {
                 wrongNumberOfArgumentsError();
             }
-            return isTabuOnly;
+            return isITS;
         }
 
         void wrongNumberOfArgumentsError() {

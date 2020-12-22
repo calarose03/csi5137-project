@@ -12,6 +12,10 @@ import org.avmframework.variable.AtomicVariable;
 
 public class TabuSearch {
 
+    /** The Tabu Search Parameters. They can be changed to experiment. Defaults are
+     * ITERATIONS = 50
+     * TABU_LIST_SIZE = 10
+     * **/
     private static final int ITERATIONS = 50;
     private static final int TABU_LIST_SIZE = 10;
 
@@ -35,11 +39,10 @@ public class TabuSearch {
         return performSearch();
     }
 
+    /** Tabu Search implementation (goes with Algorithm 3: Tabu Search in the report) **/
     protected Vector performSearch() throws TerminationException {
         int counter = 1;
         boolean improved = false;
-
-        System.out.println("Initial solution: " + current);
 
         while (counter <= ITERATIONS || improved) {
             List<Vector> neighboursList = getNeighbours(current.size(), current);
@@ -57,16 +60,21 @@ public class TabuSearch {
                 }
             }
 
+            // If the best neighbour is a better solution than the current one,
+            // we add this flag to continue iterating (if we pass over the maximum number of iterations)
             improved = bestNeighbourValue.betterThan(currentValue) ? true : false;
 
+            // Update the current solution and add it to the tabu list
             current = bestNeighbour.deepCopy();
             currentValue = bestNeighbourValue;
             tabuList.add(bestNeighbour);
 
+            // Keep the list within its allowed size
             if (tabuList.size() > TABU_LIST_SIZE) {
                 tabuList.remove(0);
             }
 
+            // Update the best solution if needed
             if (currentValue.betterThan(bestValue)) {
                 best = current.deepCopy();
                 bestValue = currentValue;
@@ -77,6 +85,7 @@ public class TabuSearch {
         return best;
     }
 
+    /** Method to obtain the neighbours (goes with Algorithm 2: Finding Neighbours in the report) **/
     private List<Vector> getNeighbours(int neighbourhoodSize, Vector vector) {
 
         List<Vector> neighboursList = new ArrayList<>();
@@ -85,10 +94,10 @@ public class TabuSearch {
 
             AtomicVariable currentVar = (AtomicVariable) vector.getVariable(i);
 
-
             int range = Math.min(currentVar.getMax() - currentVar.getValue(), currentVar.getValue() - currentVar.getMin());
             int bigMove = new Random().nextInt(range + 1) + 1;
 
+            // Create 4 new neighbours
             Vector neighbourVector1 = generateNeighbour(vector, i, 1);
             Vector neighbourVector2 = generateNeighbour(vector, i, -1);
             Vector neighbourVector3 = generateNeighbour(vector, i, bigMove);
